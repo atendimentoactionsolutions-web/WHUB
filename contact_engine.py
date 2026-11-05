@@ -294,12 +294,18 @@ def build_display_name(
         else:
             final_name = base_client
     elif naming_mode == "suffix_if_needed" or naming_mode == "always_suffix":
-        if candidate_base:
+        base_client = get_next_available_client_name(custom_prefix.strip() or "Cliente")
+        if include_pushname:
+            if candidate_base:
+                final_name = f"{base_client} - {candidate_base}"
+            else:
+                final_name = base_client
+        elif candidate_base:
             final_name = candidate_base
             if final_name.lower() in existing_icloud_names or final_name.lower() in used_names_in_batch:
                 final_name = f"{candidate_base} (WhatsApp)"
         else:
-            final_name = get_next_available_client_name(custom_prefix.strip() or "Cliente")
+            final_name = base_client
 
     # If two different unsaved numbers have the exact same pushname (e.g., two "João (WhatsApp)"),
     # disambiguate with the last 4 digits so iCloud doesn't merge two different people!

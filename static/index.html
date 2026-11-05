@@ -344,14 +344,13 @@
       const incPush = document.getElementById("includePushnameCheck").checked;
       const badge = document.getElementById("namingPreviewBadge");
 
-      if (currentNamingMode === "suffix_if_needed") {
+      const prefix = rawPrefix || "Cliente";
+      const startNum = rawStartNum || "101";
+
+      if (currentNamingMode === "suffix_if_needed" && !rawPrefix && !rawStartNum && !incPush) {
         badge.textContent = "Nome do Perfil (WhatsApp)";
-      } else if (!rawPrefix && !rawStartNum) {
-        badge.textContent = "Preencha os campos abaixo";
       } else {
-        const prefix = rawPrefix || "Cliente";
-        const startNum = rawStartNum || "1";
-        badge.textContent = incPush ? `${prefix} ${startNum} - Nome` : `${prefix} ${startNum}`;
+        badge.textContent = incPush ? `${prefix} ${startNum} - Nome do Perfil` : `${prefix} ${startNum}`;
       }
     }
 
@@ -385,23 +384,21 @@
       const rawStartNum = parseInt(document.getElementById("startNumberInput").value || "101", 10);
       const startNum = isNaN(rawStartNum) || rawStartNum < 1 ? 101 : rawStartNum;
       const incPush = document.getElementById("includePushnameCheck").checked;
-      const push = (c.pushname || c.verified_name || "").trim();
+      const push = (c.pushname || c.verified_name || "").trim().replace(/^~\s*/, "");
+
+      const baseNumName = `${rawPrefix} ${startNum + index}`;
 
       if (currentNamingMode === "suffix_if_needed") {
-        if (push) {
+        if (incPush && push) {
+          return `${baseNumName} - ${push}`;
+        }
+        if (push && !document.getElementById("customPrefixInput").value.trim() && !document.getElementById("startNumberInput").value.trim()) {
           return push;
         }
-        return `${rawPrefix} ${startNum + index}`;
+        return incPush && push ? `${baseNumName} - ${push}` : baseNumName;
       }
-      // Manual mode: always respect current customPrefixInput and startNumberInput immediately
-      let baseNumName = `${rawPrefix} ${startNum + index}`;
-      if (c.auto_name) {
-        const parts = c.auto_name.split(" - ")[0].trim();
-        const numMatch = parts.match(/\s(\d+)$/);
-        if (numMatch && !document.getElementById("startNumberInput").value.trim()) {
-          baseNumName = `${rawPrefix} ${numMatch[1]}`;
-        }
-      }
+
+      // Manual mode:
       if (incPush && push) {
         return `${baseNumName} - ${push}`;
       }

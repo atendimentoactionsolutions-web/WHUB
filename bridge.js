@@ -296,48 +296,49 @@ function scheduleSave() {
   }, 300);
 }
 
-// Upsert contact from HistorySync (here `name` is often chat displayName/pushname, NOT necessarily address book)
+// Upsert contact from HistorySync
 function upsertHistoryContact(raw) {
   if (!raw || !raw.id) return;
   if (raw.id.endsWith("@g.us") || raw.id.endsWith("@broadcast") || raw.id.endsWith("@newsletter")) return;
 
   const { pnJid, lid } = resolveToPnJid(raw);
   const cleanNotify = raw.notify && !isMaskedOrEmptyName(raw.notify) ? raw.notify.trim().replace(/^~\s*/, "") : "";
-  // Only use `raw.name` from HistorySync as a pushname fallback if `raw.notify` is present or if `raw.name` starts with `~`.
-  // Otherwise `raw.name` in HistorySync comes from `chat.name` (the already-saved AddressBook name!).
-  const cleanNameAsPush =
-    raw.name && !isMaskedOrEmptyName(raw.name) && raw.name.trim().startsWith("~")
-      ? raw.name.trim().replace(/^~\s*/, "")
-      : "";
+  const cleanDisplay = raw.displayName && !isMaskedOrEmptyName(raw.displayName) ? raw.displayName.trim().replace(/^~\s*/, "") : "";
+  const cleanName = raw.name && !isMaskedOrEmptyName(raw.name) ? raw.name.trim().replace(/^~\s*/, "") : "";
   const cleanVerified = raw.verifiedName && !isMaskedOrEmptyName(raw.verifiedName) ? raw.verifiedName.trim() : "";
+
+  // The best profile name candidate
+  const candidatePush = cleanNotify || cleanDisplay || cleanName || cleanVerified;
 
   if (lid) {
     store.lidMeta[lid] = store.lidMeta[lid] || {};
-    if (cleanNotify) store.lidMeta[lid].notify = cleanNotify;
-    if (cleanNameAsPush && !store.lidMeta[lid].notify) store.lidMeta[lid].notify = cleanNameAsPush;
-    if (cleanVerified) store.lidMeta[lid].verifiedName = cleanVerified;
+    if (candidatePush && !store.lidMeta[lid].notify) {
+      store.lidMeta[lid].notify = candidatePush;
+    }
+    if (cleanVerified && !store.lidMeta[lid].verifiedName) {
+      store.lidMeta[lid].verifiedName = cleanVerified;
+    }
   }
 
-  if (!pnJid) return;
-  const pnDigits = cleanDigits(pnJid);
-  if (pnDigits && (cleanNotify || cleanNameAsPush || cleanVerified)) {
-    store.pnMeta = store.pnMeta || {};
-    store.pnMeta[pnDigits] = store.pnMeta[pnDigits] || {};
-    if (cleanNotify) store.pnMeta[pnDigits].notify = cleanNotify;
-    if (cleanNameAsPush && !store.pnMeta[pnDigits].notify) store.pnMeta[pnDigits].notify = cleanNameAsPush;
-    if (cleanVerified) store.pnMeta[pnDigits].verifiedName = cleanVerified;
-  }
+  if (pnJid) {
+    const pnDigits = cleanDigits(pnJid);
+    if (pnDigits && candidatePush) {
+      store.pnMeta = store.pnMeta || {};
+      store.pnMeta[pnDigits] = store.pnMeta[pnDigits] || {};
+      if (!store.pnMeta[pnDigits].notify) store.pnMeta[pnDigits].notify = candidatePush;
+      if (cleanVerified && !store.pnMeta[pnDigits].verifiedName) store.pnMeta[pnDigits].verifiedName = cleanVerified;
+    }
 
-  // HARD GROUP BLOCK: Only attach pushname/verifiedName to contacts that are ALREADY a 1-on-1 chat or in AddressBook!
-  if (!store.chats[pnJid] && !(store.contacts[pnJid] && store.contacts[pnJid].isAddressBook)) {
-    return;
+    const existing = store.contacts[pnJid] || { id: pnJid };
+    if (lid) existing.lid = `${lid}@lid`;
+    if (candidatePush && !existing.notify) {
+      existing.notify = candidatePush;
+    }
+    if (cleanVerified && !existing.verifiedName) {
+      existing.verifiedName = cleanVerified;
+    }
+    store.contacts[pnJid] = existing;
   }
-  const existing = store.contacts[pnJid] || { id: pnJid };
-  if (lid) existing.lid = `${lid}@lid`;
-  if (cleanNotify) existing.notify = cleanNotify;
-  if (cleanNameAsPush && !existing.notify) existing.notify = cleanNameAsPush;
-  if (cleanVerified) existing.verifiedName = cleanVerified;
-  store.contacts[pnJid] = existing;
 }
 
 // Upsert contact from `contacts.upsert` (AppState contactAction = genuinely saved in phone's address book!)
@@ -347,8 +348,9 @@ function upsertAddressBookContact(raw) {
 
   const { pnJid, lid } = resolveToPnJid(raw);
   const cleanName = raw.name && !isMaskedOrEmptyName(raw.name) ? raw.name.trim() : "";
-  const cleanNotify = raw.notify && !isMaskedOrEmptyName(raw.notify) ? raw.notify.trim() : "";
+  const cleanNotify = raw.notify && !isMaskedOrEmptyName(raw.notify) ? raw.notify.trim().replace(/^~\s*/, "") : "";
   const cleanVerified = raw.verifiedName && !isMaskedOrEmptyName(raw.verifiedName) ? raw.verifiedName.trim() : "";
+  const candidatePush = cleanNotify || cleanVerified;
 
   if (lid) {
     store.lidMeta[lid] = store.lidMeta[lid] || {};
@@ -356,8 +358,8 @@ function upsertAddressBookContact(raw) {
       store.lidMeta[lid].name = cleanName;
       store.lidMeta[lid].isAddressBook = true;
     }
-    if (cleanNotify) store.lidMeta[lid].notify = cleanNotify;
-    if (cleanVerified) store.lidMeta[lid].verifiedName = cleanVerified;
+    if (candidatePush && !store.lidMeta[lid].notify) store.lidMeta[lid].notify = candidatePush;
+    if (cleanVerified && !store.lidMeta[lid].verifiedName) store.lidMeta[lid].verifiedName = cleanVerified;
   }
 
   if (!pnJid) return;
@@ -368,10 +370,10 @@ function upsertAddressBookContact(raw) {
     existing.name = cleanName;
     existing.isAddressBook = true;
   }
-  if (cleanNotify) {
-    existing.notify = cleanNotify;
+  if (candidatePush && !existing.notify) {
+    existing.notify = candidatePush;
   }
-  if (cleanVerified) {
+  if (cleanVerified && !existing.verifiedName) {
     existing.verifiedName = cleanVerified;
   }
   store.contacts[pnJid] = existing;
@@ -469,14 +471,14 @@ function processMessage(msg) {
   });
 
   const ts = Number(msg.messageTimestamp || 0);
-  const rawPush = !msg.key.fromMe && msg.pushName ? msg.pushName.trim() : "";
+  const rawPush = !msg.key.fromMe && msg.pushName ? msg.pushName.trim().replace(/^~\s*/, "") : "";
   const pushName = isMaskedOrEmptyName(rawPush) ? "" : rawPush;
 
   if (lid) {
     store.lidMeta[lid] = store.lidMeta[lid] || {};
     store.lidMeta[lid].isChat = true;
     store.lidMeta[lid].messageCount = (store.lidMeta[lid].messageCount || 0) + 1;
-    if (pushName) store.lidMeta[lid].notify = pushName;
+    if (pushName && !store.lidMeta[lid].notify) store.lidMeta[lid].notify = pushName;
     if (ts > 0) {
       if (!store.lidMeta[lid].conversationTimestamp || ts > store.lidMeta[lid].conversationTimestamp) {
         store.lidMeta[lid].conversationTimestamp = ts;
@@ -488,6 +490,13 @@ function processMessage(msg) {
   }
 
   if (!pnJid) return;
+
+  const pnDigits = cleanDigits(pnJid);
+  if (pnDigits && pushName) {
+    store.pnMeta = store.pnMeta || {};
+    store.pnMeta[pnDigits] = store.pnMeta[pnDigits] || {};
+    if (!store.pnMeta[pnDigits].notify) store.pnMeta[pnDigits].notify = pushName;
+  }
 
   if (!store.chats[pnJid]) {
     store.chats[pnJid] = { id: pnJid, messageCount: 0 };
@@ -509,7 +518,7 @@ function processMessage(msg) {
   if (lid) {
     store.contacts[pnJid].lid = `${lid}@lid`;
   }
-  if (pushName) {
+  if (pushName && !store.contacts[pnJid].notify) {
     store.contacts[pnJid].notify = pushName;
   }
 }

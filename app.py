@@ -365,9 +365,19 @@ def analyze_all_contacts(
                 break
 
         # Resolve best available pushname across contacts, lidMeta, pnToLid, and chat metadata
-        pushname = c_info.get("notify") or ""
+        pushname = (
+            c_info.get("notify")
+            or c_info.get("displayName")
+            or c_info.get("name")
+            or c_info.get("shortName")
+            or ""
+        )
         if "∙" in pushname or "•" in pushname:
             pushname = ""
+        if pushname:
+            pushname = pushname.strip().lstrip("~").strip()
+            if not is_meaningful_name(pushname, phone_digits):
+                pushname = ""
 
         if not pushname:
             lid_candidate = (c_info.get("lid") or "").split("@")[0] or wa_pn_to_lid.get(phone_digits, "")
@@ -377,21 +387,23 @@ def analyze_all_contacts(
                         lid_candidate = wa_pn_to_lid[k]
                         break
             if lid_candidate and lid_candidate in wa_lid_meta:
-                lm_notify = (wa_lid_meta[lid_candidate].get("notify") or "").strip()
-                if lm_notify and is_meaningful_name(lm_notify, phone_digits):
-                    pushname = lm_notify
+                lm = wa_lid_meta[lid_candidate]
+                lm_cand = (lm.get("notify") or lm.get("displayName") or lm.get("name") or "").strip().lstrip("~").strip()
+                if lm_cand and is_meaningful_name(lm_cand, phone_digits):
+                    pushname = lm_cand
 
         if not pushname:
             for k in phone_keys:
                 if k in wa_pushname_phone_map:
                     pushname = wa_pushname_phone_map[k]
                     break
-        if not pushname:
-            ch_n = (ch_info.get("name") or "").strip()
-            if ch_n and ch_n != wa_addressbook_name and is_meaningful_name(ch_n, phone_digits):
-                pushname = ch_n
 
-        verified_name = c_info.get("verifiedName") or ""
+        if not pushname:
+            ch_cand = (ch_info.get("displayName") or ch_info.get("name") or ch_info.get("username") or "").strip().lstrip("~").strip()
+            if ch_cand and ch_cand != wa_addressbook_name and is_meaningful_name(ch_cand, phone_digits):
+                pushname = ch_cand
+
+        verified_name = (c_info.get("verifiedName") or "").strip()
         if not verified_name:
             lid_candidate = (c_info.get("lid") or "").split("@")[0] or wa_pn_to_lid.get(phone_digits, "")
             if lid_candidate and lid_candidate in wa_lid_meta:
