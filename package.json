@@ -1,0 +1,15 @@
+{
+  "name": "whatsapp-bridge",
+  "version": "1.0.0",
+  "description": "WhatsApp Web history and contacts bridge for Python Extractor",
+  "main": "bridge.js",
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "libsignal": "https://codeload.github.com/whiskeysockets/libsignal-node/tar.gz/master",
+    "pino": "^9.5.0",
+    "qrcode": "^1.5.4"
+  },
+  "overrides": {
+    "libsignal": "https://codeload.github.com/whiskeysockets/libsignal-node/tar.gz/master"
+  }
+}

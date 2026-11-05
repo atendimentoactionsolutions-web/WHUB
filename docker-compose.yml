@@ -1,0 +1,13 @@
+services:
+  contato-extrator:
+    build: .
+    container_name: contato-extrator-whatsapp-icloud
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5050}:5050"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5050
+      - BRIDGE_PORT=3847

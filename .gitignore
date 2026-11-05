@@ -1,0 +1,11 @@
+# Runtime and local dependencies
+.runtime/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Sensitive session and personal contact data
+data/
+*.vcf
+*.log

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WHUB</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .preset-btn {
+      transition: all 0.15s ease;
+    }
+    .preset-btn.active {
+      border-color: #25D366;
+      background-color: #f0fdf4;
+      color: #065f46;
+      box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.18);
+    }
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen pb-12">
+
+  <!-- Header Minimalista (Mobile & Desktop) -->
+  <header class="glass-nav sticky top-0 z-30 border-b border-slate-200/80">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <!-- Brand + WhatsApp Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shadow-xs shrink-0">
+          <!-- Official WhatsApp SVG Icon -->
+          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12.031 2c-5.516 0-9.969 4.453-9.969 9.969 0 1.766.469 3.484 1.344 5l-1.406 5.141 5.266-1.375c1.469.797 3.125 1.219 4.766 1.219 5.516 0 9.969-4.453 9.969-9.969 0-5.531-4.453-9.984-9.969-9.984zm5.828 14.125c-.25.703-1.438 1.344-2 1.422-.531.078-1.203.109-1.953-.125-.453-.141-1.031-.328-1.781-.656-3.141-1.359-5.188-4.516-5.344-4.719-.156-.203-1.281-1.703-1.281-3.25 0-1.547.813-2.313 1.094-2.625.297-.313.641-.391.859-.391.219 0 .422.016.609.016.203 0 .469-.078.734.563.266.656.906 2.219.984 2.375.078.156.125.344.031.547-.094.203-.141.328-.297.5-.156.172-.313.391-.453.516-.156.141-.313.313-.141.609.188.313.813 1.344 1.75 2.172 1.203 1.078 2.219 1.406 2.531 1.563.313.156.5.125.688-.078.188-.203.797-.938 1.016-1.25.203-.313.422-.266.703-.156.297.109 1.859.875 2.172 1.031.313.156.531.234.609.359.078.141.078.797-.172 1.5z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">WHUB</h1>
+            <span id="waBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+              ...
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <button onclick="downloadVcf()" class="px-3.5 sm:px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 stroke-current stroke-2 fill-none shrink-0" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
+          </svg>
+          <span>Baixar .VCF</span>
+          <span id="headerExportBadge" class="bg-slate-950/15 text-slate-950 px-1.5 py-0.5 rounded-full text-xs font-extrabold">0</span>
+        </button>
+
+        <button onclick="openSettings()" title="Configurações" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition shadow-xs cursor-pointer">
+          <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 mt-5 space-y-5">
+
+    <!-- QR Code Banner (Aparece automaticamente na tela principal APENAS quando desconectado) -->
+    <div id="qrBanner" class="hidden bg-white border-2 border-amber-400/60 rounded-2xl p-6 shadow-xs text-center">
+      <div class="max-w-md mx-auto flex flex-col items-center">
+        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold mb-3">Conecte seu WhatsApp</span>
+        <div id="qrMainBox" class="my-2"></div>
+        <p class="text-xs text-slate-500 mt-2">Abra o WhatsApp no iPhone → Configurações → Aparelhos Conectados</p>
+      </div>
+    </div>
+
+    <!-- 3 Cards de Resumo Limpos (Responsivo Mobile & Desktop) -->
+    <div class="grid grid-cols-3 gap-2.5 sm:gap-4">
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-xs">
+        <div class="text-xs font-medium text-slate-500 truncate">Total Conversas</div>
+        <div class="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1" id="statTotal">0</div>
+      </div>
+
+      <div class="bg-white border-2 border-[#25D366]/40 rounded-2xl p-3.5 sm:p-5 shadow-xs">
+        <div class="text-xs font-bold text-emerald-700 truncate">Novos p/ Salvar</div>
+        <div class="text-xl sm:text-3xl font-extrabold text-emerald-600 mt-1" id="statNew">0</div>
+      </div>
+
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-xs">
+        <div class="text-xs font-medium text-sky-600 truncate">Já Salvos</div>
+        <div class="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1" id="statSaved">0</div>
+      </div>
+    </div>
+
+    <!-- Barra Rápida: Como Salvar os Contatos (Com Configurações Visíveis) -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">Como deseja salvar os contatos novos?</h2>
+          <p class="text-xs text-slate-500">Exemplo atual: <strong id="namingPreviewBadge" class="text-emerald-700">Cliente 101</strong></p>
+        </div>
+
+        <!-- Botões de Escolha Rápida: Apenas Manual e Nome do Perfil -->
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+          <button onclick="selectPreset('manual')" id="preset_manual" class="preset-btn active px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold cursor-pointer text-center">
+            Manual
+          </button>
+          <button onclick="selectPreset('perfil')" id="preset_perfil" class="preset-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer text-center">
+            Nome do Perfil
+          </button>
+        </div>
+      </div>
+
+      <!-- Campos Visíveis de Prefixo, Numeração Inicial e Nome do Perfil -->
+      <div id="customNumberingControls" class="pt-3.5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nome / Prefixo</label>
+          <input type="text" id="customPrefixInput" value="" placeholder="Ex: Cliente, Lead..." oninput="onSettingsChange()"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500" />
+        </div>
+
+        <div class="sm:col-span-3">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Começar do Nº</label>
+          <input type="number" id="startNumberInput" value="" placeholder="Ex: 101" min="1" oninput="onSettingsChange()"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500" />
+        </div>
+
+        <div class="sm:col-span-5 sm:pt-5">
+          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="includePushnameCheck" onchange="onSettingsChange()" class="w-4 h-4 accent-emerald-600 rounded" />
+            <span class="text-xs font-medium text-slate-700">Incluir nome do perfil</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Contatos (Tabela no Desktop / Cards Limpos no Mobile) -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+      <!-- Barra de Abas + Busca -->
+      <div class="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div class="grid grid-cols-2 sm:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <button id="tabNewBtn" onclick="switchTab('new')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-900 shadow-xs cursor-pointer text-center">
+            Novos (<span id="tabNewCount">0</span>)
+          </button>
+          <button id="tabSavedBtn" onclick="switchTab('saved')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer text-center">
+            Já Salvos (<span id="tabSavedCount">0</span>)
+          </button>
+        </div>
+
+        <div class="relative flex-1 sm:max-w-xs">
+          <input type="text" id="searchInput" placeholder="Buscar nome ou telefone..." oninput="renderLists()"
+            class="w-full pl-3.5 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-emerald-500" />
+        </div>
+      </div>
+
+      <!-- Conteúdo Aba: NOVOS -->
+      <div id="newContactsSection">
+        <!-- Visão Desktop -->
+        <div class="hidden sm:block overflow-x-auto max-h-[500px]">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+              <tr>
+                <th class="py-3 px-4 w-14 text-center">Incluir</th>
+                <th class="py-3 px-4">Nome para o iCloud (Editável)</th>
+                <th class="py-3 px-4">Perfil WhatsApp</th>
+                <th class="py-3 px-4">Telefone</th>
+              </tr>
+            </thead>
+            <tbody id="newDesktopBody" class="divide-y divide-slate-100 text-sm"></tbody>
+          </table>
+        </div>
+
+        <!-- Visão Mobile (Cards Responsivos) -->
+        <div id="newMobileList" class="sm:hidden divide-y divide-slate-100 max-h-[520px] overflow-y-auto"></div>
+      </div>
+
+      <!-- Conteúdo Aba: JÁ SALVOS -->
+      <div id="savedContactsSection" class="hidden">
+        <!-- Visão Desktop -->
+        <div class="hidden sm:block overflow-x-auto max-h-[500px]">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+              <tr>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Nome Salvo</th>
+                <th class="py-3 px-4">Telefone</th>
+                <th class="py-3 px-4">Origem</th>
+              </tr>
+            </thead>
+            <tbody id="savedDesktopBody" class="divide-y divide-slate-100 text-sm"></tbody>
+          </table>
+        </div>
+
+        <!-- Visão Mobile (Cards Responsivos) -->
+        <div id="savedMobileList" class="sm:hidden divide-y divide-slate-100 max-h-[520px] overflow-y-auto"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal / Gaveta de Configurações (Esconde opções avançadas mantendo o layout limpo) -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <!-- Cabeçalho Modal -->
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Configurações do WHUB</h3>
+        <button onclick="closeSettings()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Corpo Modal -->
+      <div class="p-5 overflow-y-auto space-y-5 text-sm">
+
+        <!-- 1. Arquivo .VCF do iCloud (Opcional) -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtro Extra iCloud (.VCF)</div>
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <input type="file" id="vcfFileInput" accept=".vcf,text/vcard" class="hidden" onchange="uploadIcloudVcf(this)" />
+            <div class="text-xs text-slate-600" id="icloudStatusText">Verificação automática do WhatsApp ativa</div>
+            <div class="flex gap-2 shrink-0">
+              <button onclick="document.getElementById('vcfFileInput').click()" class="px-3 py-1.5 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-semibold cursor-pointer">
+                Enviar .VCF
+              </button>
+              <button id="btnRemoveIcloud" onclick="removeIcloudVcf()" class="hidden px-2.5 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-semibold cursor-pointer">
+                Remover
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Histórico de Exportação -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico de Exportação</div>
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <div class="text-xs text-slate-600">Reexibir na aba "Novos" contatos que já foram exportados antes</div>
+            <button onclick="resetExportHistory()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold shrink-0 cursor-pointer">
+              Reexibir
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Sessão do WhatsApp -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Conexão WhatsApp</div>
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-xs text-slate-700 font-medium" id="waModalPhoneStatus">Verificando conta...</div>
+            <div class="flex gap-2">
+              <button onclick="refreshAll()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer">
+                Atualizar
+              </button>
+              <button onclick="reconnectWa()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer">
+                Reconectar
+              </button>
+              <button onclick="logoutWa()" class="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold cursor-pointer">
+                Trocar Conta
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rodapé Modal -->
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <button onclick="closeSettings()" class="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">
+          Concluído
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = "new";
+    let currentNamingMode = "custom_prefix";
+    let newContactsData = [];
+    let savedContactsData = [];
+    let lastContactsCount = -1;
+    let settingsTimer = null;
+
+    function openSettings() {
+      document.getElementById("settingsModal").classList.remove("hidden");
+    }
+
+    function closeSettings() {
+      document.getElementById("settingsModal").classList.add("hidden");
+    }
+
+    function selectPreset(preset) {
+      document.querySelectorAll(".preset-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById("preset_" + preset).classList.add("active");
+
+      const controls = document.getElementById("customNumberingControls");
+
+      if (preset === "manual") {
+        currentNamingMode = "custom_prefix";
+        controls.classList.remove("hidden");
+      } else {
+        currentNamingMode = "suffix_if_needed";
+        controls.classList.add("hidden");
+      }
+      updatePreviewBadge();
+      newContactsData.forEach((c, idx) => {
+        if (!c.has_custom_override) {
+          c.final_name = computeLocalFinalName(c, idx);
+        }
+      });
+      renderLists();
+      loadContacts();
+    }
+
+    function clearFormFields() {
+      document.getElementById("customPrefixInput").value = "";
+      document.getElementById("startNumberInput").value = "";
+      document.getElementById("includePushnameCheck").checked = false;
+      document.getElementById("searchInput").value = "";
+      selectPreset("manual");
+    }
+
+    function updatePreviewBadge() {
+      const rawPrefix = document.getElementById("customPrefixInput").value.trim();
+      const rawStartNum = document.getElementById("startNumberInput").value.trim();
+      const incPush = document.getElementById("includePushnameCheck").checked;
+      const badge = document.getElementById("namingPreviewBadge");
+
+      if (currentNamingMode === "suffix_if_needed") {
+        badge.textContent = "Nome do Perfil (WhatsApp)";
+      } else if (!rawPrefix && !rawStartNum) {
+        badge.textContent = "Preencha os campos abaixo";
+      } else {
+        const prefix = rawPrefix || "Cliente";
+        const startNum = rawStartNum || "1";
+        badge.textContent = incPush ? `${prefix} ${startNum} - Nome` : `${prefix} ${startNum}`;
+      }
+    }
+
+    function onSettingsChange() {
+      updatePreviewBadge();
+      // Immediately update the displayed names in the table without waiting for the network!
+      newContactsData.forEach((c, idx) => {
+        if (!c.has_custom_override) {
+          c.final_name = computeLocalFinalName(c, idx);
+        }
+      });
+      renderLists();
+      if (settingsTimer) clearTimeout(settingsTimer);
+      settingsTimer = setTimeout(() => {
+        loadContacts();
+      }, 150);
+    }
+
+    function getQueryParams() {
+      const prefix = document.getElementById("customPrefixInput").value.trim() || "Cliente";
+      const startNum = document.getElementById("startNumberInput").value || "101";
+      const incPush = document.getElementById("includePushnameCheck").checked ? "true" : "false";
+      return `naming_mode=${encodeURIComponent(currentNamingMode)}&custom_prefix=${encodeURIComponent(prefix)}&start_number=${encodeURIComponent(startNum)}&include_pushname=${incPush}&only_chats=true`;
+    }
+
+    function computeLocalFinalName(c, index) {
+      if (c.has_custom_override && c.final_name) {
+        return c.final_name;
+      }
+      const rawPrefix = document.getElementById("customPrefixInput").value.trim() || "Cliente";
+      const rawStartNum = parseInt(document.getElementById("startNumberInput").value || "101", 10);
+      const startNum = isNaN(rawStartNum) || rawStartNum < 1 ? 101 : rawStartNum;
+      const incPush = document.getElementById("includePushnameCheck").checked;
+      const push = (c.pushname || c.verified_name || "").trim();
+
+      if (currentNamingMode === "suffix_if_needed") {
+        if (push) {
+          return push;
+        }
+        return `${rawPrefix} ${startNum + index}`;
+      }
+      // Manual mode: always respect current customPrefixInput and startNumberInput immediately
+      let baseNumName = `${rawPrefix} ${startNum + index}`;
+      if (c.auto_name) {
+        const parts = c.auto_name.split(" - ")[0].trim();
+        const numMatch = parts.match(/\s(\d+)$/);
+        if (numMatch && !document.getElementById("startNumberInput").value.trim()) {
+          baseNumName = `${rawPrefix} ${numMatch[1]}`;
+        }
+      }
+      if (incPush && push) {
+        return `${baseNumName} - ${push}`;
+      }
+      return baseNumName;
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        const wa = data.whatsapp || {};
+        const icloud = data.icloud || {};
+        const st = wa.stats || {};
+
+        const badge = document.getElementById("waBadge");
+        const qrBanner = document.getElementById("qrBanner");
+        const qrMainBox = document.getElementById("qrMainBox");
+        const waModalPhoneStatus = document.getElementById("waModalPhoneStatus");
+
+        if (wa.state === "connected") {
+          badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800";
+          badge.textContent = "● Online";
+          qrBanner.classList.add("hidden");
+          const userPhone = wa.user && wa.user.id ? wa.user.id.split(":")[0].split("@")[0] : "";
+          waModalPhoneStatus.textContent = userPhone ? `Conectado: +${userPhone}` : "Conectado";
+        } else if (wa.state === "qr" && wa.qrDataUrl) {
+          badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800";
+          badge.textContent = "Ler QR Code";
+          qrBanner.classList.remove("hidden");
+          qrMainBox.innerHTML = `<img src="${wa.qrDataUrl}" alt="QR Code" class="w-48 h-48 rounded-xl border border-slate-200 bg-white p-2 mx-auto" />`;
+          waModalPhoneStatus.textContent = "Aguardando leitura do QR Code";
+        } else {
+          badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600";
+          badge.textContent = "Conectando...";
+          waModalPhoneStatus.textContent = wa.lastMessage || "Iniciando...";
+        }
+
+        const icloudStatusText = document.getElementById("icloudStatusText");
+        const btnRemoveIcloud = document.getElementById("btnRemoveIcloud");
+        if (icloud.loaded) {
+          icloudStatusText.innerHTML = `<strong class="text-emerald-700">${icloud.contacts_count} contatos</strong> no filtro .vcf`;
+          btnRemoveIcloud.classList.remove("hidden");
+        } else {
+          icloudStatusText.textContent = "Filtro automático ativo";
+          btnRemoveIcloud.classList.add("hidden");
+        }
+
+        const totalNow = `${st.totalIndividualChats || 0}:${st.totalIndividualContacts || 0}:${st.syncHistoryBatches || 0}:${st.lastSyncAt || ""}`;
+        if (totalNow !== lastContactsCount) {
+          lastContactsCount = totalNow;
+          loadContacts();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    let loadRequestCounter = 0;
+
+    async function loadContacts() {
+      const myReqId = ++loadRequestCounter;
+      try {
+        const res = await fetch(`/api/contacts?${getQueryParams()}`);
+        const data = await res.json();
+        if (myReqId !== loadRequestCounter) return; // Ignore stale out-of-order responses!
+
+        newContactsData = data.new_contacts || [];
+        savedContactsData = data.already_saved_contacts || [];
+
+        const s = data.summary || {};
+        document.getElementById("statTotal").textContent = s.total_chats_1on1 || s.total_1on1_analyzed || 0;
+        document.getElementById("statNew").textContent = s.new_unsaved_count || 0;
+        document.getElementById("statSaved").textContent = s.already_saved_count || 0;
+        document.getElementById("headerExportBadge").textContent = s.ready_to_export_count || 0;
+
+        document.getElementById("tabNewCount").textContent = newContactsData.length;
+        document.getElementById("tabSavedCount").textContent = savedContactsData.length;
+
+        renderLists();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderLists() {
+      const q = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+
+      const filteredNew = newContactsData.filter(c => {
+        if (!q) return true;
+        return (
+          (c.final_name || "").toLowerCase().includes(q) ||
+          (c.pushname || "").toLowerCase().includes(q) ||
+          (c.intl_phone || "").toLowerCase().includes(q) ||
+          (c.e164 || "").toLowerCase().includes(q)
+        );
+      });
+
+      const newDesktopBody = document.getElementById("newDesktopBody");
+      const newMobileList = document.getElementById("newMobileList");
+
+      if (filteredNew.length === 0) {
+        const emptyHtml = `
+          <div class="py-12 px-4 text-center">
+            <div class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 font-bold text-lg mb-2">✓</div>
+            <div class="text-sm font-bold text-slate-900">Tudo Sincronizado!</div>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Todos os seus ${savedContactsData.length} contatos já estão salvos. Para reexportar, abra as <strong>Configurações (⚙️)</strong> no topo.
+            </p>
+          </div>
+        `;
+        newDesktopBody.innerHTML = `<tr><td colspan="4">${emptyHtml}</td></tr>`;
+        newMobileList.innerHTML = emptyHtml;
+      } else {
+        const sliceNew = filteredNew.slice(0, 500);
+        newDesktopBody.innerHTML = sliceNew.map(c => `
+          <tr class="hover:bg-slate-50/80 ${c.excluded ? 'opacity-40' : ''}">
+            <td class="py-2.5 px-4 text-center">
+              <input type="checkbox" ${!c.excluded ? "checked" : ""} onchange="toggleExclude('${c.jid}', !this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" />
+            </td>
+            <td class="py-2.5 px-4">
+              <input type="text" value="${escapeHtml(c.final_name)}" oninput="onInlineNameInput('${c.jid}', this.value)" onchange="updateContactName('${c.jid}', this.value)"
+                class="w-full max-w-xs px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-500" />
+            </td>
+            <td class="py-2.5 px-4 text-xs text-slate-600">
+              ${c.pushname ? escapeHtml(c.pushname) : '<span class="text-slate-400">—</span>'}
+            </td>
+            <td class="py-2.5 px-4 font-mono text-xs font-medium text-sky-700">
+              ${escapeHtml(c.intl_phone)}
+            </td>
+          </tr>
+        `).join("");
+
+        newMobileList.innerHTML = sliceNew.map(c => `
+          <div class="p-3.5 flex items-center gap-3 ${c.excluded ? 'opacity-40' : ''}">
+            <input type="checkbox" ${!c.excluded ? "checked" : ""} onchange="toggleExclude('${c.jid}', !this.checked)" class="w-4 h-4 accent-emerald-600 rounded shrink-0" />
+            <div class="flex-1 min-w-0">
+              <input type="text" value="${escapeHtml(c.final_name)}" oninput="onInlineNameInput('${c.jid}', this.value)" onchange="updateContactName('${c.jid}', this.value)"
+                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 mb-1" />
+              <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+                <span class="font-mono text-sky-700">${escapeHtml(c.intl_phone)}</span>
+                <span class="truncate max-w-[120px]">${escapeHtml(c.pushname || "")}</span>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // Render Saved
+      const filteredSaved = savedContactsData.filter(c => {
+        if (!q) return true;
+        return (
+          (c.saved_name || "").toLowerCase().includes(q) ||
+          (c.pushname || "").toLowerCase().includes(q) ||
+          (c.intl_phone || "").toLowerCase().includes(q)
+        );
+      });
+
+      const savedDesktopBody = document.getElementById("savedDesktopBody");
+      const savedMobileList = document.getElementById("savedMobileList");
+
+      if (filteredSaved.length === 0) {
+        const emptySaved = `<div class="py-10 text-center text-xs text-slate-400">Nenhum contato encontrado.</div>`;
+        savedDesktopBody.innerHTML = `<tr><td colspan="4">${emptySaved}</td></tr>`;
+        savedMobileList.innerHTML = emptySaved;
+      } else {
+        const sliceSaved = filteredSaved.slice(0, 500);
+        savedDesktopBody.innerHTML = sliceSaved.map(c => `
+          <tr class="hover:bg-slate-50/80">
+            <td class="py-2.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">✓ Salvo</span>
+            </td>
+            <td class="py-2.5 px-4 text-xs font-bold text-slate-900">${escapeHtml(c.saved_name)}</td>
+            <td class="py-2.5 px-4 font-mono text-xs text-sky-700">${escapeHtml(c.intl_phone)}</td>
+            <td class="py-2.5 px-4 text-xs text-slate-500">${escapeHtml(c.source)}</td>
+          </tr>
+        `).join("");
+
+        savedMobileList.innerHTML = sliceSaved.map(c => `
+          <div class="p-3.5 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-900 truncate">${escapeHtml(c.saved_name)}</div>
+              <div class="font-mono text-xs text-sky-700 mt-0.5">${escapeHtml(c.intl_phone)}</div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 shrink-0">✓ Salvo</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function onInlineNameInput(jid, val) {
+      const target = newContactsData.find(c => c.jid === jid);
+      if (target) {
+        const clean = (val || "").trim();
+        if (clean) {
+          target.final_name = clean;
+          target.has_custom_override = true;
+        } else {
+          target.has_custom_override = false;
+        }
+      }
+    }
+
+    async function updateContactName(jid, newName) {
+      const clean = (newName || "").trim();
+      const target = newContactsData.find(c => c.jid === jid);
+      if (target) {
+        if (clean) {
+          target.final_name = clean;
+          target.has_custom_override = true;
+        } else {
+          target.has_custom_override = false;
+        }
+      }
+      await fetch("/api/update-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jid, final_name: clean }),
+      });
+      loadContacts();
+    }
+
+    async function toggleExclude(jid, excluded) {
+      await fetch("/api/update-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jid, excluded }),
+      });
+      loadContacts();
+    }
+
+    async function resetExportHistory() {
+      if (!confirm("Reexibir na aba 'Novos' os contatos que você já exportou anteriormente?")) return;
+      await fetch("/api/reset-exported-history", { method: "POST" });
+      closeSettings();
+      await loadContacts();
+    }
+
+    async function uploadIcloudVcf(input) {
+      if (!input.files || !input.files[0]) return;
+      const formData = new FormData();
+      formData.append("file", input.files[0]);
+      const res = await fetch("/api/upload-icloud-vcf", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!data.ok) alert(data.error || "Erro ao ler .vcf");
+      input.value = "";
+      await fetchStatus();
+      await loadContacts();
+    }
+
+    async function removeIcloudVcf() {
+      await fetch("/api/remove-icloud-vcf", { method: "POST" });
+      await fetchStatus();
+      await loadContacts();
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const newBtn = document.getElementById("tabNewBtn");
+      const savedBtn = document.getElementById("tabSavedBtn");
+      if (tab === "new") {
+        newBtn.className = "px-3.5 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-900 shadow-xs cursor-pointer text-center";
+        savedBtn.className = "px-3.5 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer text-center";
+      } else {
+        savedBtn.className = "px-3.5 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-900 shadow-xs cursor-pointer text-center";
+        newBtn.className = "px-3.5 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer text-center";
+      }
+      document.getElementById("newContactsSection").classList.toggle("hidden", tab !== "new");
+      document.getElementById("savedContactsSection").classList.toggle("hidden", tab !== "saved");
+    }
+
+    async function downloadVcf() {
+      const prefix = document.getElementById("customPrefixInput").value.trim() || "Cliente";
+      const startNum = document.getElementById("startNumberInput").value || "101";
+      const incPush = document.getElementById("includePushnameCheck").checked;
+
+      // Ensure every row in newContactsData reflects the exact current UI settings before exporting
+      newContactsData.forEach((c, idx) => {
+        if (!c.has_custom_override) {
+          c.final_name = computeLocalFinalName(c, idx);
+        }
+      });
+
+      try {
+        const res = await fetch("/api/export-vcf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            naming_mode: currentNamingMode,
+            custom_prefix: prefix,
+            start_number: startNum,
+            include_pushname: incPush,
+            only_chats: true,
+            contacts: newContactsData,
+          }),
+        });
+        if (!res.ok) throw new Error("Export failed");
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        a.download = `Contatos_Novos_WhatsApp_para_iCloud_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.vcf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setTimeout(loadContacts, 600);
+      } catch (e) {
+        window.location.href = `/api/export-vcf?${getQueryParams()}`;
+        setTimeout(loadContacts, 1200);
+      }
+    }
+
+    async function logoutWa() {
+      if (!confirm("Deseja desconectar a conta atual do WhatsApp?")) return;
+      await fetch("/api/whatsapp/logout", { method: "POST" });
+      clearFormFields();
+      closeSettings();
+      setTimeout(fetchStatus, 1200);
+    }
+
+    async function reconnectWa() {
+      await fetch("/api/whatsapp/reconnect", { method: "POST" });
+      closeSettings();
+      setTimeout(fetchStatus, 1000);
+    }
+
+    function refreshAll() {
+      fetchStatus();
+      loadContacts();
+    }
+
+    updatePreviewBadge();
+    fetchStatus();
+    loadContacts();
+    setInterval(fetchStatus, 1000);
+  </script>
+</body>
+</html>
