@@ -58,6 +58,13 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2">
+        <button id="btnHeaderLogout" onclick="logoutWa()" title="Desconectar e Trocar Conta" class="hidden px-3 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition shadow-xs items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span class="hidden sm:inline">Trocar Conta</span>
+        </button>
+
         <button onclick="downloadVcf()" class="px-3.5 sm:px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4 stroke-current stroke-2 fill-none shrink-0" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
@@ -290,6 +297,7 @@
     let savedContactsData = [];
     let lastContactsCount = -1;
     let settingsTimer = null;
+    let lastConnectedUser = null;
 
     function openSettings() {
       document.getElementById("settingsModal").classList.remove("hidden");
@@ -412,23 +420,55 @@
         const qrBanner = document.getElementById("qrBanner");
         const qrMainBox = document.getElementById("qrMainBox");
         const waModalPhoneStatus = document.getElementById("waModalPhoneStatus");
+        const btnHeaderLogout = document.getElementById("btnHeaderLogout");
 
         if (wa.state === "connected") {
           badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800";
           badge.textContent = "● Online";
           qrBanner.classList.add("hidden");
+          if (btnHeaderLogout) {
+            btnHeaderLogout.classList.remove("hidden");
+            btnHeaderLogout.classList.add("flex");
+          }
           const userPhone = wa.user && wa.user.id ? wa.user.id.split(":")[0].split("@")[0] : "";
           waModalPhoneStatus.textContent = userPhone ? `Conectado: +${userPhone}` : "Conectado";
-        } else if (wa.state === "qr" && wa.qrDataUrl) {
-          badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800";
-          badge.textContent = "Ler QR Code";
-          qrBanner.classList.remove("hidden");
-          qrMainBox.innerHTML = `<img src="${wa.qrDataUrl}" alt="QR Code" class="w-48 h-48 rounded-xl border border-slate-200 bg-white p-2 mx-auto" />`;
-          waModalPhoneStatus.textContent = "Aguardando leitura do QR Code";
+
+          if (lastConnectedUser && userPhone && lastConnectedUser !== userPhone) {
+            // Conta de WhatsApp alterada! Limpa os campos para o novo usuário
+            clearFormFields();
+          }
+          lastConnectedUser = userPhone;
         } else {
-          badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600";
-          badge.textContent = "Conectando...";
-          waModalPhoneStatus.textContent = wa.lastMessage || "Iniciando...";
+          if (btnHeaderLogout) {
+            btnHeaderLogout.classList.add("hidden");
+            btnHeaderLogout.classList.remove("flex");
+          }
+          lastConnectedUser = null;
+
+          // Se desconectado ou em QR code, zera imediatamente contatos e contadores na tela!
+          if (newContactsData.length > 0 || savedContactsData.length > 0) {
+            newContactsData = [];
+            savedContactsData = [];
+            document.getElementById("statTotal").textContent = "0";
+            document.getElementById("statNew").textContent = "0";
+            document.getElementById("statSaved").textContent = "0";
+            document.getElementById("headerExportBadge").textContent = "0";
+            document.getElementById("tabNewCount").textContent = "0";
+            document.getElementById("tabSavedCount").textContent = "0";
+            renderLists();
+          }
+
+          if (wa.state === "qr" && wa.qrDataUrl) {
+            badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800";
+            badge.textContent = "Ler QR Code";
+            qrBanner.classList.remove("hidden");
+            qrMainBox.innerHTML = `<img src="${wa.qrDataUrl}" alt="QR Code" class="w-48 h-48 rounded-xl border border-slate-200 bg-white p-2 mx-auto" />`;
+            waModalPhoneStatus.textContent = "Aguardando leitura do QR Code";
+          } else {
+            badge.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600";
+            badge.textContent = "Conectando...";
+            waModalPhoneStatus.textContent = wa.lastMessage || "Iniciando...";
+          }
         }
 
         const icloudStatusText = document.getElementById("icloudStatusText");
@@ -717,11 +757,21 @@
     }
 
     async function logoutWa() {
-      if (!confirm("Deseja desconectar a conta atual do WhatsApp?")) return;
-      await fetch("/api/whatsapp/logout", { method: "POST" });
+      if (!confirm("Deseja desconectar a conta atual do WhatsApp e zerar todo o histórico para conectar um novo número?")) return;
       clearFormFields();
+      lastConnectedUser = null;
+      newContactsData = [];
+      savedContactsData = [];
+      document.getElementById("statTotal").textContent = "0";
+      document.getElementById("statNew").textContent = "0";
+      document.getElementById("statSaved").textContent = "0";
+      document.getElementById("headerExportBadge").textContent = "0";
+      document.getElementById("tabNewCount").textContent = "0";
+      document.getElementById("tabSavedCount").textContent = "0";
+      renderLists();
       closeSettings();
-      setTimeout(fetchStatus, 1200);
+      await fetch("/api/whatsapp/logout", { method: "POST" });
+      setTimeout(fetchStatus, 600);
     }
 
     async function reconnectWa() {

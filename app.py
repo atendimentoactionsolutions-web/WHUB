@@ -177,6 +177,60 @@ def analyze_all_contacts(
     only_with_chat_history: bool = True,
 ) -> Dict[str, Any]:
     ensure_bridge_running()
+    bridge_user = None
+    bridge_state = "disconnected"
+    try:
+        st_resp = requests.get(f"{BRIDGE_URL}/status", timeout=2.0)
+        if st_resp.status_code == 200:
+            st_data = st_resp.json()
+            bridge_state = st_data.get("state", "disconnected")
+            bridge_user = st_data.get("user")
+    except Exception:
+        pass
+
+    # If WhatsApp is not connected, return 100% clean/empty state!
+    if bridge_state != "connected" or not bridge_user:
+        return {
+            "summary": {
+                "total_contacts_in_wa": 0,
+                "total_1on1_analyzed": 0,
+                "total_chats_1on1": 0,
+                "new_unsaved_count": 0,
+                "already_saved_count": 0,
+                "ready_to_export_count": 0,
+            },
+            "new_contacts": [],
+            "already_saved_contacts": [],
+            "naming_mode": naming_mode,
+            "custom_prefix": custom_prefix,
+            "start_number": start_number,
+        }
+
+    # Detect user account change in Flask
+    current_phone = bridge_user.get("id", "").split(":")[0].split("@")[0].strip() if bridge_user else ""
+    user_tracker_file = os.path.join(DATA_DIR, "last_connected_user.txt")
+    if current_phone:
+        last_phone = ""
+        if os.path.exists(user_tracker_file):
+            try:
+                with open(user_tracker_file, "r", encoding="utf-8") as f:
+                    last_phone = f.read().strip()
+            except Exception:
+                pass
+        if last_phone and last_phone != current_phone:
+            # WhatsApp account changed! Wipe previous account's export history and custom edits
+            for p in (EXPORTED_HISTORY_PATH, CUSTOM_OVERRIDES_PATH):
+                if os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except Exception:
+                        pass
+        try:
+            with open(user_tracker_file, "w", encoding="utf-8") as f:
+                f.write(current_phone)
+        except Exception:
+            pass
+
     wa_store = None
     try:
         raw_resp = requests.get(f"{BRIDGE_URL}/data", timeout=5.0)
@@ -185,14 +239,6 @@ def analyze_all_contacts(
     except Exception:
         pass
 
-    if not wa_store or not wa_store.get("contacts"):
-        raw_file = os.path.join(DATA_DIR, "wa_raw_store.json")
-        if os.path.exists(raw_file):
-            try:
-                with open(raw_file, "r", encoding="utf-8") as f:
-                    wa_store = json.load(f)
-            except Exception:
-                pass
     if not wa_store:
         wa_store = {"contacts": {}, "chats": {}, "syncHistoryBatches": 0, "totalMessagesScanned": 0}
 
@@ -648,8 +694,14 @@ def api_wa_logout():
         requests.post(f"{BRIDGE_URL}/logout", timeout=5.0)
     except Exception:
         pass
-    # Also clear local cache and previous export history so the new WhatsApp account starts 100% clean
-    for p in (os.path.join(DATA_DIR, "wa_raw_store.json"), EXPORTED_HISTORY_PATH, CUSTOM_OVERRIDES_PATH):
+    # Clear all account data, raw store, exported history, custom overrides and exported vcf files
+    for p in (
+        os.path.join(DATA_DIR, "wa_raw_store.json"),
+        os.path.join(DATA_DIR, "wa_raw_store.json.tmp"),
+        EXPORTED_HISTORY_PATH,
+        CUSTOM_OVERRIDES_PATH,
+        os.path.join(DATA_DIR, "last_connected_user.txt"),
+    ):
         if os.path.exists(p):
             try:
                 os.remove(p)

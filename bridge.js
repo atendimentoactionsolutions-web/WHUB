@@ -19,7 +19,40 @@ let store = {
   syncHistoryBatches: 0,
   totalMessagesScanned: 0,
   lastSyncAt: null,
+  currentUserId: null,
 };
+
+function wipeAllAccountData(reason = "logout") {
+  console.log(`🧹 [WHUB] Zerando todo o histórico e dados da conta anterior (Motivo: ${reason})...`);
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  store = {
+    contacts: {},
+    chats: {},
+    lidToPn: {},
+    pnToLid: {},
+    lidMeta: {},
+    syncHistoryBatches: 0,
+    totalMessagesScanned: 0,
+    lastSyncAt: null,
+    currentUserId: null,
+  };
+  try {
+    if (fs.existsSync(RAW_DATA_FILE)) fs.unlinkSync(RAW_DATA_FILE);
+  } catch (e) {}
+  try {
+    const tmp = `${RAW_DATA_FILE}.tmp`;
+    if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+  } catch (e) {}
+  try {
+    fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+  } catch (e) {}
+  hasScannedAuthDirOnce = false;
+  connectionStatus.user = null;
+  connectionStatus.syncProgress = 0;
+}
 
 function cleanDigits(val) {
   if (!val || typeof val !== "string") return "";
@@ -44,6 +77,7 @@ if (fs.existsSync(RAW_DATA_FILE)) {
     store.syncHistoryBatches = saved.syncHistoryBatches || 0;
     store.totalMessagesScanned = saved.totalMessagesScanned || 0;
     store.lastSyncAt = saved.lastSyncAt || null;
+    store.currentUserId = saved.currentUserId || null;
 
     // Clean up any previously polluted contacts (only keep contacts that are in 1-on-1 chats, or saved in AddressBook)
     const rawContacts = saved.contacts || {};
@@ -556,6 +590,12 @@ async function startWhatsApp() {
       }
 
       if (connection === "open") {
+        const newUserId = cleanDigits(sock.user?.id || "");
+        if (store.currentUserId && newUserId && store.currentUserId !== newUserId) {
+          console.log(`⚠️ Troca de conta detectada: de ${store.currentUserId} para ${newUserId}. Zerando histórico anterior...`);
+          wipeAllAccountData("account_switch");
+        }
+        store.currentUserId = newUserId;
         connectionStatus.state = "connected";
         connectionStatus.qrDataUrl = null;
         connectionStatus.user = sock.user;
@@ -597,10 +637,13 @@ async function startWhatsApp() {
         if (statusCode === DisconnectReason.loggedOut) {
           connectionStatus.state = "disconnected";
           connectionStatus.user = null;
-          connectionStatus.lastMessage = "Desconectado (Sessão encerrada). Clique em Reconectar para gerar novo QR Code.";
-          try {
-            fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-          } catch (e) {}
+          connectionStatus.lastMessage = "Desconectado. Histórico zerado para a próxima conta.";
+          wipeAllAccountData("logged_out_by_phone");
+          setTimeout(() => {
+            isStarting = false;
+            startWhatsApp();
+          }, 1500);
+          return;
         } else if (shouldReconnect) {
           connectionStatus.state = "connecting";
           connectionStatus.lastMessage = "Reconectando ao WhatsApp...";
@@ -736,27 +779,18 @@ const server = http.createServer(async (req, res) => {
         await sock.logout().catch(() => {});
         sock = null;
       }
-      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-      hasScannedAuthDirOnce = false;
-      store = {
-        contacts: {},
-        chats: {},
-        lidToPn: {},
-        pnToLid: {},
-        lidMeta: {},
-        syncHistoryBatches: 0,
-        totalMessagesScanned: 0,
-        lastSyncAt: null,
-      };
-      scheduleSave();
+      wipeAllAccountData("user_requested_logout");
       connectionStatus = {
         state: "disconnected",
         qrDataUrl: null,
         user: null,
         syncProgress: 0,
-        lastMessage: "Sessão desconectada. Iniciando novo QR Code...",
+        lastMessage: "Sessão desconectada. Histórico anterior totalmente zerado.",
       };
-      setTimeout(() => startWhatsApp(), 1000);
+      setTimeout(() => {
+        isStarting = false;
+        startWhatsApp();
+      }, 1000);
       res.end(JSON.stringify({ ok: true }));
     } catch (e) {
       res.statusCode = 500;
