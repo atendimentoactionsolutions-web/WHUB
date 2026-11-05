@@ -58,19 +58,36 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2">
-        <button id="btnHeaderLogout" onclick="logoutWa()" title="Desconectar e Trocar Conta" class="hidden px-3 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition shadow-xs items-center gap-1.5 cursor-pointer">
+        <button id="btnHeaderLogout" onclick="logoutWa()" title="Desconectar e Trocar Conta" class="hidden px-2.5 sm:px-3 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition shadow-xs items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           <span class="hidden sm:inline">Trocar Conta</span>
         </button>
 
-        <button onclick="downloadVcf()" class="px-3.5 sm:px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+        <button id="btnSendWhatsapp" onclick="sendToMyWhatsApp()" title="Enviar arquivo VCF direto para o seu WhatsApp no iPhone" class="px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+          <span class="hidden md:inline">Enviar p/ meu WhatsApp</span>
+          <span class="md:hidden">WhatsApp</span>
+          <span id="headerExportBadge" class="bg-white/20 text-white px-1.5 py-0.5 rounded-full text-xs font-extrabold">0</span>
+        </button>
+
+        <button onclick="downloadVcf()" title="Baixar / Compartilhar arquivo .VCF" class="px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4 stroke-current stroke-2 fill-none shrink-0" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
           </svg>
-          <span>Baixar .VCF</span>
-          <span id="headerExportBadge" class="bg-slate-950/15 text-slate-950 px-1.5 py-0.5 rounded-full text-xs font-extrabold">0</span>
+          <span class="hidden sm:inline">Baixar .VCF</span>
+        </button>
+
+        <button onclick="openQrModal()" title="Importar direto no iPhone com a Câmera" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition shadow-xs cursor-pointer">
+          <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 14h3v3h-3zm4 4h3v3h-3zm-4 3v-3h3"></path>
+          </svg>
         </button>
 
         <button onclick="openSettings()" title="Configurações" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition shadow-xs cursor-pointer">
@@ -151,6 +168,25 @@
             <span class="text-xs font-medium text-slate-700">Incluir nome do perfil</span>
           </label>
         </div>
+      </div>
+    </div>
+
+    <!-- Banner Rápido: Como Salvar no iPhone sem Complicação -->
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50/60 to-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">📲</div>
+        <div>
+          <div class="font-bold text-slate-900 text-xs sm:text-sm">Envie direto para o seu WhatsApp e salve em 1 toque:</div>
+          <div class="text-[11px] sm:text-xs text-slate-600">Não precisa de AirDrop! Clique em <strong>"Enviar para Mim"</strong>, toque no arquivo que chegar na sua conversa do WhatsApp e selecione <em>"Salvar Todos os Contatos"</em>.</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+        <button onclick="sendToMyWhatsApp()" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer text-center">
+          Enviar para Mim
+        </button>
+        <button onclick="openAirDropHelp()" title="Ajuda com AirDrop" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs transition cursor-pointer text-center whitespace-nowrap">
+          Dica AirDrop 📡
+        </button>
       </div>
     </div>
 
@@ -290,6 +326,84 @@
     </div>
   </div>
 
+  <!-- Modal 1: Sucesso ao Enviar para WhatsApp -->
+  <div id="sendSuccessModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 text-center">
+      <div class="w-14 h-14 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">✓</div>
+      <h3 class="text-base font-bold text-slate-900">Arquivo enviado para o seu WhatsApp!</h3>
+      <div class="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 text-xs text-left space-y-2.5">
+        <div class="font-bold text-emerald-950 flex items-center gap-1.5">
+          <span>🍏</span> Como salvar no seu iPhone agora (3 segundos):
+        </div>
+        <ol class="list-decimal list-inside space-y-1.5 text-slate-700">
+          <li>Abra o <strong>WhatsApp</strong> no celular que você conectou.</li>
+          <li>Abra a conversa <strong>com você mesmo ("Você")</strong>.</li>
+          <li>Toque no arquivo <strong>.vcf</strong> que acabou de chegar.</li>
+          <li>No topo da tela, toque em <strong>"Salvar Todos os Contatos"</strong>!</li>
+        </ol>
+      </div>
+      <p class="text-xs text-slate-500">Pronto! Todos os contatos já estarão na agenda do iPhone e salvos no iCloud.</p>
+      <button onclick="closeModal('sendSuccessModal')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer">
+        Perfeito!
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal 2: Como Evitar Falha no AirDrop -->
+  <div id="airDropHelpModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <span>📡</span> Como resolver falha no AirDrop
+        </h3>
+        <button onclick="closeModal('airDropHelpModal')" class="text-slate-400 hover:text-slate-600 cursor-pointer text-lg font-bold">✕</button>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 space-y-2">
+        <p class="font-bold">Por que o AirDrop dá falha ao enviar contatos entre dois celulares?</p>
+        <p class="text-slate-700 leading-relaxed">
+          No iPhone de destino, o AirDrop vem por padrão configurado como <strong>"Apenas Contatos"</strong>. Se o celular que está enviando não estiver salvo na lista de contatos do outro, a Apple <strong>bloqueia o envio na hora</strong> e dá falha.
+        </p>
+      </div>
+      <div class="space-y-2 text-xs text-slate-700">
+        <div class="font-bold text-slate-900">Passo a passo no iPhone que vai RECEBER os contatos:</div>
+        <ol class="list-decimal list-inside space-y-1.5 pl-1">
+          <li>Abra a <strong>Central de Controle</strong> (arraste o dedo do canto superior direito da tela para baixo).</li>
+          <li><strong>Pressione e segure</strong> o quadrado de conexões (onde fica o Wi-Fi e Bluetooth).</li>
+          <li>Toque no ícone do <strong>AirDrop</strong>.</li>
+          <li>Mude de "Apenas Contatos" para <strong>"Todos por 10 Minutos"</strong>.</li>
+          <li>Faça o envio por AirDrop novamente — vai receber e importar na hora!</li>
+        </ol>
+      </div>
+      <div class="pt-2 border-t border-slate-100 flex gap-2">
+        <button onclick="closeModal('airDropHelpModal')" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs cursor-pointer">
+          Entendi, fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Importar Direto no iPhone com a Câmera -->
+  <div id="qrModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 text-center">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>📷</span> Importar Direto no iPhone
+        </h3>
+        <button onclick="closeModal('qrModal')" class="text-slate-400 hover:text-slate-600 cursor-pointer text-lg font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Abra a <strong>Câmera</strong> do seu iPhone e aponte para o QR Code abaixo para baixar e salvar todos os contatos direto nele:
+      </p>
+      <div id="qrDirectImportBox" class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center min-h-[220px]">
+        <div id="qrDirectImg" class="text-xs text-slate-400">Gerando QR Code...</div>
+      </div>
+      <p class="text-[11px] text-slate-500">Ao abrir no Safari do iPhone, toque em <strong>"Adicionar todos os contatos"</strong>.</p>
+      <button onclick="closeModal('qrModal')" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs cursor-pointer">
+        Fechar
+      </button>
+    </div>
+  </div>
+
   <script>
     let currentTab = "new";
     let currentNamingMode = "custom_prefix";
@@ -299,12 +413,88 @@
     let settingsTimer = null;
     let lastConnectedUser = null;
 
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("hidden");
+    }
+
+    function openAirDropHelp() {
+      openModal("airDropHelpModal");
+    }
+
+    async function openQrModal() {
+      openModal("qrModal");
+      const box = document.getElementById("qrDirectImg");
+      box.innerHTML = `<span class="animate-pulse text-xs text-slate-500">Gerando QR Code...</span>`;
+      try {
+        const fullUrl = `${window.location.origin}/api/export-vcf?inline=1&${getQueryParams()}`;
+        const res = await fetch(`/api/qrcode?text=${encodeURIComponent(fullUrl)}`);
+        const data = await res.json();
+        if (data.dataUrl) {
+          box.innerHTML = `<img src="${data.dataUrl}" alt="QR Code" class="w-48 h-48 rounded-xl bg-white p-2 mx-auto border border-slate-200" />`;
+        } else {
+          box.innerHTML = `<span class="text-xs text-red-500 font-semibold">Erro ao gerar QR Code</span>`;
+        }
+      } catch (e) {
+        box.innerHTML = `<span class="text-xs text-red-500 font-semibold">Erro: ${e.message}</span>`;
+      }
+    }
+
+    async function sendToMyWhatsApp() {
+      const btn = document.getElementById("btnSendWhatsapp");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> <span>Enviando...</span>`;
+
+      const prefix = document.getElementById("customPrefixInput").value.trim() || "Cliente";
+      const startNum = document.getElementById("startNumberInput").value || "101";
+      const incPush = document.getElementById("includePushnameCheck").checked;
+
+      newContactsData.forEach((c, idx) => {
+        if (!c.has_custom_override) {
+          c.final_name = computeLocalFinalName(c, idx);
+        }
+      });
+
+      try {
+        const res = await fetch("/api/send-vcf-to-whatsapp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            naming_mode: currentNamingMode,
+            custom_prefix: prefix,
+            start_number: startNum,
+            include_pushname: incPush,
+            only_chats: true,
+            contacts: newContactsData,
+          }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          openModal("sendSuccessModal");
+          setTimeout(loadContacts, 1000);
+        } else {
+          alert("Não foi possível enviar para o WhatsApp: " + (data.error || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro ao conectar com o servidor: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
     function openSettings() {
-      document.getElementById("settingsModal").classList.remove("hidden");
+      openModal("settingsModal");
     }
 
     function closeSettings() {
-      document.getElementById("settingsModal").classList.add("hidden");
+      closeModal("settingsModal");
     }
 
     function selectPreset(preset) {
@@ -736,12 +926,31 @@
         });
         if (!res.ok) throw new Error("Export failed");
         const blob = await res.blob();
+        const now = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        const fileName = `Contatos_Novos_WhatsApp_para_iCloud_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.vcf`;
+
+        // If Web Share API is supported with files (e.g. iPhone Safari), open native Share Sheet!
+        try {
+          const file = new File([blob], fileName, { type: "text/x-vcard" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Contatos WHUB",
+              text: "Arquivo de contatos pronto para salvar no iPhone e iCloud.",
+            });
+            setTimeout(loadContacts, 800);
+            return;
+          }
+        } catch (shareErr) {
+          if (shareErr && shareErr.name === "AbortError") return;
+        }
+
+        // Standard browser download
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        const now = new Date();
-        const pad = n => String(n).padStart(2, "0");
-        a.download = `Contatos_Novos_WhatsApp_para_iCloud_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.vcf`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         a.remove();

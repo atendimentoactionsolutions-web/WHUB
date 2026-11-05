@@ -558,6 +558,18 @@ def api_status():
     )
 
 
+@app.route("/api/qrcode")
+def api_qrcode():
+    text = request.args.get("text", "")
+    if not text:
+        return jsonify({"error": "Missing text parameter"}), 400
+    try:
+        r = requests.get(f"{BRIDGE_URL}/qrcode", params={"text": text}, timeout=3.0)
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/contacts", methods=["GET"])
 def api_contacts():
     naming_mode = request.args.get("naming_mode", "custom_prefix")
@@ -692,11 +704,73 @@ def api_export_vcf():
 
     record_exported_contacts(contacts_to_export)
 
+    is_inline = request.args.get("inline", "0") == "1"
+    disposition = f'inline; filename="{filename}"' if is_inline else f'attachment; filename="{filename}"'
+
     return Response(
         vcf_str.encode("utf-8"),
-        mimetype="text/vcard; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        mimetype="text/x-vcard; charset=utf-8",
+        headers={"Content-Disposition": disposition},
     )
+
+
+@app.route("/api/send-vcf-to-whatsapp", methods=["POST"])
+def api_send_vcf_to_whatsapp():
+    ensure_bridge_running()
+    body = request.get_json(force=True, silent=True) or {}
+    naming_mode = body.get("naming_mode", "custom_prefix")
+    custom_prefix = (body.get("custom_prefix") or "Cliente").strip() or "Cliente"
+    try:
+        start_number = int(body.get("start_number", 101))
+    except (ValueError, TypeError):
+        start_number = 101
+    include_pushname = bool(body.get("include_pushname", False))
+    only_chats = bool(body.get("only_chats", True))
+    client_contacts = body.get("contacts")
+
+    if isinstance(client_contacts, list) and len(client_contacts) > 0:
+        contacts_to_export = [c for c in client_contacts if not c.get("excluded") and c.get("final_name") and c.get("e164")]
+    else:
+        analysis = analyze_all_contacts(
+            naming_mode=naming_mode,
+            custom_prefix=custom_prefix,
+            start_number=start_number,
+            include_pushname=include_pushname,
+            only_with_chat_history=only_chats,
+        )
+        contacts_to_export = [c for c in analysis["new_contacts"] if not c.get("excluded")]
+
+    if not contacts_to_export:
+        return jsonify({"ok": False, "error": "Nenhum contato novo para enviar."}), 400
+
+    vcf_str = generate_icloud_vcf(contacts_to_export)
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    filename = f"Contatos_Novos_WhatsApp_para_iCloud_{timestamp}.vcf"
+
+    record_exported_contacts(contacts_to_export)
+
+    try:
+        r = requests.post(
+            f"{BRIDGE_URL}/send-vcf-to-me",
+            json={
+                "vcfContent": vcf_str,
+                "fileName": filename,
+                "contactsCount": len(contacts_to_export),
+            },
+            timeout=15.0,
+        )
+        b_res = r.json()
+        if r.status_code == 200 and b_res.get("ok"):
+            return jsonify({
+                "ok": True,
+                "count": len(contacts_to_export),
+                "filename": filename,
+                "recipient": b_res.get("recipient"),
+            })
+        else:
+            return jsonify({"ok": False, "error": b_res.get("error", "Erro ao enviar pelo WhatsApp")}), 500
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.route("/api/whatsapp/logout", methods=["POST"])

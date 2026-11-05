@@ -1,5 +1,7 @@
 import re
 import quopri
+import uuid
+import datetime
 import phonenumbers
 from typing import Dict, List, Set, Tuple, Optional
 
@@ -333,15 +335,18 @@ def escape_vcard_text(text: str) -> str:
 def generate_icloud_vcf(contacts_to_export: List[Dict[str, any]]) -> str:
     """
     Generates an Apple iCloud-compliant vCard 3.0 (.vcf) file.
-    Rules for 100% iCloud Web & macOS/iOS Contacts compatibility:
+    Rules for 100% iCloud Web, AirDrop & macOS/iOS Contacts compatibility:
     - VERSION:3.0
     - CRLF line endings (\r\n)
     - UTF-8 encoding without BOM
-    - Both N (structured name) and FN (formatted name) present
-    - TEL;TYPE=CELL;TYPE=VOICE;TYPE=pref:+E164
-    - Also includes the raw WhatsApp number if different from 9-digit upgraded number so WhatsApp matches 100%
+    - Unique UID per contact (CRITICAL for iOS AirDrop daemon to not fail multi-card streams)
+    - Full name in FN and Given Name (N:;Name;;;) so sorting/display never inverts
+    - Standard TEL;TYPE=CELL,pref:+E164
+    - Revision timestamp (REV)
     """
+    import uuid
     lines: List[str] = []
+    rev_ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
     for idx, c in enumerate(contacts_to_export, start=1):
         full_name = c.get("final_name", "").strip()
@@ -350,27 +355,19 @@ def generate_icloud_vcf(contacts_to_export: List[Dict[str, any]]) -> str:
         if not full_name or not e164:
             continue
 
-        # Split full_name into Given Name and Family Name for structured N property
-        parts = full_name.split(" ", 1)
-        given_name = parts[0]
-        family_name = parts[1] if len(parts) > 1 else ""
-
         esc_fn = escape_vcard_text(full_name)
-        esc_given = escape_vcard_text(given_name)
-        esc_family = escape_vcard_text(family_name)
+        card_uid = f"whub-{uuid.uuid4()}"
 
         lines.append("BEGIN:VCARD")
         lines.append("VERSION:3.0")
-        lines.append(f"PRODID:-//Apple Inc.//iCloud Web Address Book 2420B//PT")
-        lines.append(f"N:{esc_family};{esc_given};;;")
+        lines.append("PRODID:-//WHUB//WhatsApp to iCloud Contacts//PT")
+        lines.append(f"UID:{card_uid}")
+        lines.append(f"N:;{esc_fn};;;")
         lines.append(f"FN:{esc_fn}")
-        lines.append(f"TEL;TYPE=CELL;TYPE=VOICE;TYPE=pref:{e164}")
-        # If the WhatsApp JID had 8 digits and we upgraded to 9 digits (or vice versa),
-        # adding the secondary variation inside the SAME contact card guarantees that
-        # both iOS Phone/iMessage AND WhatsApp recognize the contact immediately!
+        lines.append(f"TEL;TYPE=CELL,pref:{e164}")
         if raw_e164 and raw_e164 != e164:
-            lines.append(f"TEL;TYPE=CELL;TYPE=VOICE:{raw_e164}")
-        lines.append("CATEGORIES:WhatsApp")
+            lines.append(f"TEL;TYPE=CELL:{raw_e164}")
+        lines.append(f"REV:{rev_ts}")
         lines.append("END:VCARD")
 
     return "\r\n".join(lines) + "\r\n"

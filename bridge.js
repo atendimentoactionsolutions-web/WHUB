@@ -782,6 +782,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/qrcode") {
+    try {
+      const text = url.searchParams.get("text") || "";
+      if (!text) {
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ error: "Missing text" }));
+      }
+      const dataUrl = await QRCode.toDataURL(text, { width: 300, margin: 2 });
+      res.end(JSON.stringify({ dataUrl }));
+    } catch (err) {
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
   if (req.method === "POST" && url.pathname === "/logout") {
     try {
       if (sock) {
@@ -805,6 +821,45 @@ const server = http.createServer(async (req, res) => {
       res.statusCode = 500;
       res.end(JSON.stringify({ ok: false, error: e.message }));
     }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/send-vcf-to-me") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        if (!sock || connectionStatus.state !== "connected" || !sock.user) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ ok: false, error: "WhatsApp não está conectado no momento." }));
+        }
+        const data = JSON.parse(body || "{}");
+        const vcfContent = data.vcfContent || "";
+        const fileName = data.fileName || "Contatos_Novos_WhatsApp_iCloud.vcf";
+        const contactsCount = data.contactsCount || 0;
+
+        if (!vcfContent) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ ok: false, error: "Conteúdo VCF vazio" }));
+        }
+
+        const selfJid = sock.user.id.split(":")[0] + "@s.whatsapp.net";
+        const buffer = Buffer.from(vcfContent, "utf-8");
+
+        await sock.sendMessage(selfJid, {
+          document: buffer,
+          mimetype: "text/x-vcard",
+          fileName: fileName,
+          caption: `🍏 *WHUB — Contatos para o iCloud*\n\n📦 *${contactsCount} contatos novos* prontos!\n\n👉 *Como salvar no iPhone:*\n1. Toque no arquivo *.vcf* acima aqui no WhatsApp\n2. Toque em *"Salvar Todos os Contatos"*\n3. Pronto! Todos salvos e sincronizados com o iCloud! 🚀`,
+        });
+
+        res.end(JSON.stringify({ ok: true, recipient: selfJid }));
+      } catch (err) {
+        console.error("Erro ao enviar VCF via WhatsApp:", err);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
     return;
   }
 
