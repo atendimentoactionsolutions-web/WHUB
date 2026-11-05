@@ -28,9 +28,13 @@ fi
 echo "📦 [3/5] Instalando dependências npm..."
 npm install --omit=dev
 
-# 4. Instalação das dependências Python
-echo "📦 [4/5] Instalando dependências Python..."
-pip3 install -r requirements.txt --break-system-packages 2>/dev/null || pip3 install -r requirements.txt
+# 4. Instalação das dependências Python em ambiente virtual isolado (PEP 668 compliant)
+echo "📦 [4/5] Configurando ambiente virtual Python e instalando dependências..."
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
+./venv/bin/pip install --upgrade pip
+./venv/bin/pip install -r requirements.txt
 
 # 5. Configuração do Serviço Systemd (para rodar 24/7 reiniciando automaticamente)
 echo "⚙️ [5/5] Configurando serviço em segundo plano (systemd)..."
@@ -47,10 +51,10 @@ After=network.target
 Type=simple
 User=${USER_NAME}
 WorkingDirectory=${APP_DIR}
-ExecStart=/usr/bin/python3 ${APP_DIR}/app.py
+ExecStart=${APP_DIR}/venv/bin/python3 ${APP_DIR}/app.py
 Restart=always
 RestartSec=5
-Environment=PATH=/usr/bin:/usr/local/bin:${PATH}
+Environment=PATH=${APP_DIR}/venv/bin:/usr/bin:/usr/local/bin:${PATH}
 Environment=HOST=0.0.0.0
 Environment=PORT=5050
 
