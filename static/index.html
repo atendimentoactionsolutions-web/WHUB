@@ -65,20 +65,24 @@
           <span class="hidden sm:inline">Trocar Conta</span>
         </button>
 
-        <button id="btnSendWhatsapp" onclick="sendToMyWhatsApp()" title="Enviar arquivo VCF direto para o seu WhatsApp no iPhone" class="px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+        <button id="btnSendWhatsapp" onclick="sendToMyWhatsApp()" title="Enviar arquivo VCF direto para o seu WhatsApp no iPhone" class="px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
           </svg>
-          <span class="hidden md:inline">Enviar p/ meu WhatsApp</span>
+          <span class="hidden md:inline">Enviar WhatsApp</span>
           <span class="md:hidden">WhatsApp</span>
-          <span id="headerExportBadge" class="bg-white/20 text-white px-1.5 py-0.5 rounded-full text-xs font-extrabold">0</span>
         </button>
 
-        <button onclick="downloadVcf()" title="Baixar / Compartilhar arquivo .VCF" class="px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+        <button onclick="downloadVcf(true)" title="Abrir direto no app Contatos do iPhone (Salva em 1 toque)" class="px-2.5 sm:px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+          <span>📲 Abrir no Contatos</span>
+        </button>
+
+        <button onclick="downloadVcf(false)" id="btnHeaderDownload" title="Baixar arquivo .VCF diretamente" class="px-3 sm:px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4 stroke-current stroke-2 fill-none shrink-0" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
           </svg>
-          <span class="hidden sm:inline">Baixar .VCF</span>
+          <span>Baixar .VCF</span>
+          <span id="headerExportBadge" class="bg-emerald-500 text-white px-1.5 py-0.5 rounded-full text-xs font-extrabold">0</span>
         </button>
 
         <button onclick="openQrModal()" title="Importar direto no iPhone com a Câmera" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition shadow-xs cursor-pointer">
@@ -176,16 +180,23 @@
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">📲</div>
         <div>
-          <div class="font-bold text-slate-900 text-xs sm:text-sm">Envie direto para o seu WhatsApp e salve em 1 toque:</div>
-          <div class="text-[11px] sm:text-xs text-slate-600">Não precisa de AirDrop! Clique em <strong>"Enviar para Mim"</strong>, toque no arquivo que chegar na sua conversa do WhatsApp e selecione <em>"Salvar Todos os Contatos"</em>.</div>
+          <div class="font-bold text-slate-900 text-xs sm:text-sm">Três formas práticas de salvar no iPhone:</div>
+          <div class="text-[11px] sm:text-xs text-slate-600">
+            <strong>1. Abrir no Contatos:</strong> Abre a tela nativa do iPhone "Adicionar contatos" na hora. <br class="hidden sm:inline" />
+            <strong>2. WhatsApp:</strong> Envia o arquivo .VCF direto pro seu WhatsApp. <br class="hidden sm:inline" />
+            <strong>3. Baixar .VCF:</strong> Faz download direto do arquivo sem bloqueio.
+          </div>
         </div>
       </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
-        <button onclick="sendToMyWhatsApp()" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer text-center">
-          Enviar para Mim
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
+        <button onclick="downloadVcf(true)" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition shadow-xs cursor-pointer text-center whitespace-nowrap">
+          📲 Abrir no Contatos
         </button>
-        <button onclick="openAirDropHelp()" title="Ajuda com AirDrop" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs transition cursor-pointer text-center whitespace-nowrap">
-          Dica AirDrop 📡
+        <button onclick="sendToMyWhatsApp()" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer text-center whitespace-nowrap">
+          💬 Enviar p/ WhatsApp
+        </button>
+        <button onclick="downloadVcf(false)" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs transition shadow-xs cursor-pointer text-center whitespace-nowrap">
+          📥 Baixar .VCF
         </button>
       </div>
     </div>
@@ -899,67 +910,24 @@
       document.getElementById("savedContactsSection").classList.toggle("hidden", tab !== "saved");
     }
 
-    async function downloadVcf() {
+    function downloadVcf(isInline = false) {
+      if (document.activeElement && document.activeElement.tagName === "INPUT") {
+        document.activeElement.blur();
+      }
+
       const prefix = document.getElementById("customPrefixInput").value.trim() || "Cliente";
       const startNum = document.getElementById("startNumberInput").value || "101";
-      const incPush = document.getElementById("includePushnameCheck").checked;
+      const incPush = document.getElementById("includePushnameCheck").checked ? "true" : "false";
+      const inlineParam = isInline ? "&inline=1" : "";
 
-      // Ensure every row in newContactsData reflects the exact current UI settings before exporting
-      newContactsData.forEach((c, idx) => {
-        if (!c.has_custom_override) {
-          c.final_name = computeLocalFinalName(c, idx);
-        }
-      });
+      const downloadUrl = `/api/export-vcf?naming_mode=${encodeURIComponent(currentNamingMode)}&custom_prefix=${encodeURIComponent(prefix)}&start_number=${encodeURIComponent(startNum)}&include_pushname=${incPush}&only_chats=true${inlineParam}&_t=${Date.now()}`;
 
-      try {
-        const res = await fetch("/api/export-vcf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            naming_mode: currentNamingMode,
-            custom_prefix: prefix,
-            start_number: startNum,
-            include_pushname: incPush,
-            only_chats: true,
-            contacts: newContactsData,
-          }),
-        });
-        if (!res.ok) throw new Error("Export failed");
-        const blob = await res.blob();
-        const now = new Date();
-        const pad = n => String(n).padStart(2, "0");
-        const fileName = `Contatos_Novos_WhatsApp_para_iCloud_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.vcf`;
+      // DIRECT NATIVE BROWSER NAVIGATION:
+      // Completely avoids iOS Safari WebKit blob a.click() silent blocks!
+      // Triggers native iOS download prompt / Contacts.app directly.
+      window.location.href = downloadUrl;
 
-        // If Web Share API is supported with files (e.g. iPhone Safari), open native Share Sheet!
-        try {
-          const file = new File([blob], fileName, { type: "text/x-vcard" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: "Contatos WHUB",
-              text: "Arquivo de contatos pronto para salvar no iPhone e iCloud.",
-            });
-            setTimeout(loadContacts, 800);
-            return;
-          }
-        } catch (shareErr) {
-          if (shareErr && shareErr.name === "AbortError") return;
-        }
-
-        // Standard browser download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        setTimeout(loadContacts, 600);
-      } catch (e) {
-        window.location.href = `/api/export-vcf?${getQueryParams()}`;
-        setTimeout(loadContacts, 1200);
-      }
+      setTimeout(loadContacts, 1800);
     }
 
     async function logoutWa() {

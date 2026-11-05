@@ -319,6 +319,31 @@ def build_display_name(
     return final_name
 
 
+def escape_vcard_fn(text: str) -> str:
+    """Escapes formatted name without breaking commas or spaces in Apple Contacts."""
+    if not text:
+        return ""
+    return (
+        text.replace("\\", "\\\\")
+        .replace("\r\n", " ")
+        .replace("\n", " ")
+        .strip()
+    )
+
+
+def escape_vcard_structured(text: str) -> str:
+    """Escapes structured field components (N) where semicolons separate fields."""
+    if not text:
+        return ""
+    return (
+        text.replace("\\", "\\\\")
+        .replace(";", r"\;")
+        .replace("\r\n", " ")
+        .replace("\n", " ")
+        .strip()
+    )
+
+
 def escape_vcard_text(text: str) -> str:
     if not text:
         return ""
@@ -335,13 +360,14 @@ def escape_vcard_text(text: str) -> str:
 def generate_icloud_vcf(contacts_to_export: List[Dict[str, any]]) -> str:
     """
     Generates an Apple iCloud-compliant vCard 3.0 (.vcf) file.
-    Rules for 100% iCloud Web, AirDrop & macOS/iOS Contacts compatibility:
+    Rules for 100% iCloud Web, AirDrop, iOS Safari & WhatsApp document compatibility:
     - VERSION:3.0
-    - CRLF line endings (\r\n)
+    - PRODID:-//Apple Inc.//iPhone OS 18.0//EN
+    - CRLF line endings (\\r\\n)
     - UTF-8 encoding without BOM
-    - Unique UID per contact (CRITICAL for iOS AirDrop daemon to not fail multi-card streams)
-    - Full name in FN and Given Name (N:;Name;;;) so sorting/display never inverts
-    - Standard TEL;TYPE=CELL,pref:+E164
+    - Unique UID per contact (CRITICAL for iOS Contacts & AirDrop daemon)
+    - Clean N (N:;Name;;;) so sorting/display never inverts
+    - Apple-native item1.TEL;type=CELL;type=VOICE;type=pref and item1.X-ABLabel:_$!<Mobile>!$_
     - Revision timestamp (REV)
     """
     import uuid
@@ -355,18 +381,21 @@ def generate_icloud_vcf(contacts_to_export: List[Dict[str, any]]) -> str:
         if not full_name or not e164:
             continue
 
-        esc_fn = escape_vcard_text(full_name)
+        esc_fn = escape_vcard_fn(full_name)
+        esc_n = escape_vcard_structured(full_name)
         card_uid = f"whub-{uuid.uuid4()}"
 
         lines.append("BEGIN:VCARD")
         lines.append("VERSION:3.0")
-        lines.append("PRODID:-//WHUB//WhatsApp to iCloud Contacts//PT")
+        lines.append("PRODID:-//Apple Inc.//iPhone OS 18.0//EN")
         lines.append(f"UID:{card_uid}")
-        lines.append(f"N:;{esc_fn};;;")
+        lines.append(f"N:;{esc_n};;;")
         lines.append(f"FN:{esc_fn}")
-        lines.append(f"TEL;TYPE=CELL,pref:{e164}")
+        lines.append(f"item1.TEL;type=CELL;type=VOICE;type=pref:{e164}")
+        lines.append("item1.X-ABLabel:_$!<Mobile>!$_")
         if raw_e164 and raw_e164 != e164:
-            lines.append(f"TEL;TYPE=CELL:{raw_e164}")
+            lines.append(f"item2.TEL;type=CELL;type=VOICE:{raw_e164}")
+            lines.append("item2.X-ABLabel:_$!<Mobile>!$_")
         lines.append(f"REV:{rev_ts}")
         lines.append("END:VCARD")
 

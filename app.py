@@ -704,13 +704,20 @@ def api_export_vcf():
 
     record_exported_contacts(contacts_to_export)
 
-    is_inline = request.args.get("inline", "0") == "1"
+    is_inline = (request.args.get("inline", "0") == "1")
+    if request.method == "POST" and isinstance(body, dict) and body.get("inline"):
+        is_inline = True
+
     disposition = f'inline; filename="{filename}"' if is_inline else f'attachment; filename="{filename}"'
 
     return Response(
         vcf_str.encode("utf-8"),
         mimetype="text/x-vcard; charset=utf-8",
-        headers={"Content-Disposition": disposition},
+        headers={
+            "Content-Disposition": disposition,
+            "Content-Type": "text/x-vcard; charset=utf-8",
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        },
     )
 
 
